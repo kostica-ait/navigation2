@@ -34,6 +34,10 @@ void PathConverter::configure(nav2_util::LifecycleNode::SharedPtr node)
     node, "smoothing_radius", rclcpp::ParameterValue(1.0));
   smoothing_radius_ = static_cast<float>(node->get_parameter("smoothing_radius").as_double());
   nav2_util::declare_parameter_if_not_declared(
+    node, "smoothing_angle_threshold", rclcpp::ParameterValue(2.9));
+  smoothing_angle_threshold_ = static_cast<float>(
+    node->get_parameter("smoothing_angle_threshold").as_double());
+  nav2_util::declare_parameter_if_not_declared(
     node, "smooth_corners", rclcpp::ParameterValue(false));
   smooth_corners_ = node->get_parameter("smooth_corners").as_bool();
 
@@ -73,7 +77,8 @@ nav_msgs::msg::Path PathConverter::densify(
       const EdgePtr & next_edge = route.edges[i + 1];
       end = edge->end->coords;
 
-      CornerArc corner_arc(start, end, next_edge->end->coords, smoothing_radius_);
+      CornerArc corner_arc(start, end, next_edge->end->coords, smoothing_radius_,
+        smoothing_angle_threshold_);
       if (corner_arc.isCornerValid() && smooth_corners_) {
         // if an arc exists, end of the first edge is the start of the arc
         end = corner_arc.getCornerStart();
