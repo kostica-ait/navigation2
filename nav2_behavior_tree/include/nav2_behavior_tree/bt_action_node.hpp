@@ -61,6 +61,7 @@ public:
     auto bt_loop_duration =
       config().blackboard->template get<std::chrono::milliseconds>("bt_loop_duration");
     getInputOrBlackboard("server_timeout", server_timeout_);
+    getInputOrBlackboard("cancel_timeout", cancel_timeout_);
     wait_for_service_timeout_ =
       config().blackboard->template get<std::chrono::milliseconds>("wait_for_service_timeout");
 
@@ -186,6 +187,15 @@ public:
   }
 
   /**
+   * @brief Function to perform work in a BT Node when the action server times out
+   * Such as setting the error code ID status to timed out for action clients.
+   */
+  virtual void on_timeout()
+  {
+    return;
+  }
+
+  /**
    * @brief The main override required by a BT action
    * @return BT::NodeStatus Status of tick execution
    */
@@ -229,6 +239,7 @@ public:
             "Timed out while waiting for action server to acknowledge goal request for %s",
             action_name_.c_str());
           future_goal_handle_.reset();
+          on_timeout();
           return BT::NodeStatus::FAILURE;
         }
       }
@@ -259,6 +270,7 @@ public:
               "Timed out while waiting for action server to acknowledge goal request for %s",
               action_name_.c_str());
             future_goal_handle_.reset();
+            on_timeout();
             return BT::NodeStatus::FAILURE;
           }
         }
@@ -314,7 +326,7 @@ public:
     if (should_cancel_goal()) {
       auto future_result = action_client_->async_get_result(goal_handle_);
       auto future_cancel = action_client_->async_cancel_goal(goal_handle_);
-      if (callback_group_executor_.spin_until_future_complete(future_cancel, server_timeout_) !=
+      if (callback_group_executor_.spin_until_future_complete(future_cancel, cancel_timeout_) !=
         rclcpp::FutureReturnCode::SUCCESS)
       {
         RCLCPP_ERROR(
@@ -322,7 +334,7 @@ public:
           "Failed to cancel action server for %s", action_name_.c_str());
       }
 
-      if (callback_group_executor_.spin_until_future_complete(future_result, server_timeout_) !=
+      if (callback_group_executor_.spin_until_future_complete(future_result, cancel_timeout_) !=
         rclcpp::FutureReturnCode::SUCCESS)
       {
         RCLCPP_ERROR(
@@ -471,6 +483,9 @@ protected:
 
   // The timeout value while waiting for response from a server when a
   // new action goal is sent or canceled
+  // The timeout value when cancelling actions during halt
+  std::chrono::milliseconds cancel_timeout_;
+
   std::chrono::milliseconds server_timeout_;
 
   // The timeout value for BT loop execution

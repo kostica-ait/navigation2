@@ -41,7 +41,7 @@ public:
   typedef std::function<void ()> OnLoopCallback;
   typedef std::function<void (typename ActionT::Goal::ConstSharedPtr)> OnPreemptCallback;
   typedef std::function<void (typename ActionT::Result::SharedPtr,
-      nav2_behavior_tree::BtStatus)> OnCompletionCallback;
+      nav2_behavior_tree::BtStatus &)> OnCompletionCallback;
 
   /**
    * @brief A constructor for nav2_behavior_tree::BtActionServer class
@@ -254,6 +254,9 @@ protected:
 
   // Default timeout value while waiting for response from a server
   std::chrono::milliseconds default_server_timeout_;
+
+  // Default timeout value when cancelling actions during node halt
+  std::chrono::milliseconds default_cancel_timeout_;
 
   // The timeout value for waiting for a service to response
   std::chrono::milliseconds wait_for_service_timeout_;
