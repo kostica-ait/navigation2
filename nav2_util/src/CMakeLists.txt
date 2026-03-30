@@ -1,6 +1,7 @@
 add_library(${library_name} SHARED
   costmap.cpp
   node_utils.cpp
+  path_utils.cpp
   lifecycle_service_client.cpp
   string_utils.cpp
   lifecycle_utils.cpp

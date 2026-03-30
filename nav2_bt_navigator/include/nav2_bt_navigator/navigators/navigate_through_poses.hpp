@@ -100,7 +100,7 @@ protected:
    */
   void goalCompleted(
     typename ActionT::Result::SharedPtr result,
-    const nav2_behavior_tree::BtStatus final_bt_status) override;
+    nav2_behavior_tree::BtStatus & final_bt_status) override;
 
   /**
    * @brief Goal pose initialization on the blackboard
@@ -111,9 +111,13 @@ protected:
   rclcpp::Time start_time_;
   std::string goals_blackboard_id_;
   std::string path_blackboard_id_;
+  std::string tracking_feedback_blackboard_id_;
 
   // Odometry smoother object
   std::shared_ptr<nav2_util::OdomSmoother> odom_smoother_;
+  size_t start_index_ = 0;
+  nav_msgs::msg::Path previous_path_;
+  double search_window_;
 };
 
 }  // namespace nav2_bt_navigator

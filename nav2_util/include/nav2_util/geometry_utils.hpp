@@ -16,6 +16,7 @@
 #define NAV2_UTIL__GEOMETRY_UTILS_HPP_
 
 #include <cmath>
+#include <vector>
 
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -24,6 +25,7 @@
 #include "geometry_msgs/msg/quaternion.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "nav_msgs/msg/path.hpp"
+#include "nav2_msgs/msg/waypoint_status.hpp"
 
 namespace nav2_util
 {
@@ -177,6 +179,102 @@ inline double calculate_path_length(const nav_msgs::msg::Path & path, size_t sta
     path_length += euclidean_distance(path.poses[idx].pose, path.poses[idx + 1].pose);
   }
   return path_length;
+}
+
+/**
+ * @brief Find the index of the first goal in `PENDING` status matching the
+ * given target pose.
+ * @param waypoint_statuses List of waypoint statuses to search through.
+ * @param goal Target pose to match against waypoint goals.
+ * @return Index of the first matching goal in PENDING status, -1 if not found.
+ */
+inline int find_next_matching_goal_in_waypoint_statuses(
+  const std::vector<nav2_msgs::msg::WaypointStatus> & waypoint_statuses,
+  const geometry_msgs::msg::PoseStamped & goal)
+{
+  auto itr = std::find_if(waypoint_statuses.begin(), waypoint_statuses.end(),
+    [&goal](const nav2_msgs::msg::WaypointStatus & status) {
+      return status.waypoint_pose == goal &&
+             status.waypoint_status == nav2_msgs::msg::WaypointStatus::PENDING;
+    });
+
+  if (itr == waypoint_statuses.end()) {
+    return -1;
+  }
+
+  return itr - waypoint_statuses.begin();
+}
+
+/**
+ * @brief Computes the shortest (perpendicular) distance from a point to a path segment.
+ *
+ * Given a point and a line segment defined by two poses, calculates the minimum distance
+ * from the point to the segment in the XY plane. If the segment is too short,
+ * returns the distance from the point to the segment's start.
+ *
+ * See: https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+ *
+ * @param point The point to measure from (geometry_msgs::msg::Point).
+ * @param start The starting pose of the segment (geometry_msgs::msg::Pose).
+ * @param end The ending pose of the segment (geometry_msgs::msg::Pose).
+ * @return The shortest distance from the point to the segment in meters.
+ */
+inline double distance_to_path_segment(
+  const geometry_msgs::msg::Point & point,
+  const geometry_msgs::msg::Pose & start,
+  const geometry_msgs::msg::Pose & end)
+{
+  const auto & p = point;
+  const auto & a = start.position;
+  const auto & b = end.position;
+
+  const double dx_seg = b.x - a.x;
+  const double dy_seg = b.y - a.y;
+
+  const double seg_len_sq = (dx_seg * dx_seg) + (dy_seg * dy_seg);
+
+  if (seg_len_sq <= 1e-9) {
+    return euclidean_distance(point, a);
+  }
+
+  const double dot = ((p.x - a.x) * dx_seg) + ((p.y - a.y) * dy_seg);
+  const double t = std::clamp(dot / seg_len_sq, 0.0, 1.0);
+
+  const double proj_x = a.x + t * dx_seg;
+  const double proj_y = a.y + t * dy_seg;
+
+  const double dx_proj = p.x - proj_x;
+  const double dy_proj = p.y - proj_y;
+  return std::hypot(dx_proj, dy_proj);
+}
+
+/**
+ * @brief Computes the 2D cross product between the vector from start to end and the vector from start to point.
+ * The sign of this calculation's result can be used to determine which side are you on of the track.
+ *
+ * See: https://en.wikipedia.org/wiki/Cross_product
+ *
+ * @param point The point to check relative to the segment.
+ * @param start The starting pose of the segment.
+ * @param end The ending pose of the segment.
+ * @return The signed 2D cross product value.
+ */
+inline double cross_product_2d(
+  const geometry_msgs::msg::Point & point,
+  const geometry_msgs::msg::Pose & start,
+  const geometry_msgs::msg::Pose & end)
+{
+  const auto & p = point;
+  const auto & a = start.position;
+  const auto & b = end.position;
+
+  const double path_vec_x = b.x - a.x;
+  const double path_vec_y = b.y - a.y;
+
+  const double robot_vec_x = p.x - a.x;
+  const double robot_vec_y = p.y - a.y;
+
+  return (path_vec_x * robot_vec_y) - (path_vec_y * robot_vec_x);
 }
 
 }  // namespace geometry_utils

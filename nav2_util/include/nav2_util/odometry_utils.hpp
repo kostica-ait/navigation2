@@ -76,6 +76,22 @@ public:
    */
   inline geometry_msgs::msg::TwistStamped getTwistStamped() {return vel_smooth_;}
 
+  /**
+   * @brief Get raw (unsmoothed) twist stamped msg from the latest odometry
+   * @return twist TwistStamped msg
+   */
+  inline geometry_msgs::msg::TwistStamped getRawTwistStamped()
+  {
+    std::lock_guard<std::mutex> lock(odom_mutex_);
+    geometry_msgs::msg::TwistStamped twist_stamped;
+    if (odom_history_.empty()) {
+      return twist_stamped;
+    }
+    twist_stamped.header = odom_history_.back().header;
+    twist_stamped.twist = odom_history_.back().twist.twist;
+    return twist_stamped;
+  }
+
 protected:
   /**
    * @brief Callback of odometry subscriber to process

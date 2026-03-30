@@ -20,9 +20,12 @@ uint16 TIMEOUT=307
 uint16 NO_VALID_PATH=308
 uint16 NO_VIAPOINTS_GIVEN=309
 
+int16 ALL_GOALS = -1
+
 nav_msgs/Path path
 builtin_interfaces/Duration planning_time
 uint16 error_code
 string error_msg
+int16 last_reached_index -1
 ---
 #feedback definition

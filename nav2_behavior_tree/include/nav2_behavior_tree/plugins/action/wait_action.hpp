@@ -28,6 +28,9 @@ namespace nav2_behavior_tree
  */
 class WaitAction : public BtActionNode<nav2_msgs::action::Wait>
 {
+  using Action = nav2_msgs::action::Wait;
+  using ActionResult = Action::Result;
+
 public:
   /**
    * @brief A constructor for nav2_behavior_tree::WaitAction
@@ -46,6 +49,27 @@ public:
   void on_tick() override;
 
   /**
+   * @brief Function to perform work in a BT Node when action result is returned
+   */
+  BT::NodeStatus on_success() override;
+
+  /**
+   * @brief Function to perform work in a BT Node when action is aborted
+   */
+  BT::NodeStatus on_aborted() override;
+
+  /**
+   * @brief Function to perform work in a BT Node when action is cancelled
+   */
+  BT::NodeStatus on_cancelled() override;
+
+  /**
+   * @brief Function to perform work in a BT Node when the action server times out
+   * Such as setting the error code ID status to timed out for action clients.
+   */
+  void on_timeout() override;
+
+  /**
    * @brief Function to read parameters and initialize class variables
    */
   void initialize();
@@ -58,7 +82,11 @@ public:
   {
     return providedBasicPorts(
       {
-        BT::InputPort<double>("wait_duration", 1.0, "Wait time")
+        BT::InputPort<double>("wait_duration", 1.0, "Wait time"),
+        BT::OutputPort<ActionResult::_error_code_type>(
+          "error_code_id", "The wait behavior error code"),
+        BT::OutputPort<std::string>(
+          "error_msg", "The wait behavior error msg"),
       });
   }
 };

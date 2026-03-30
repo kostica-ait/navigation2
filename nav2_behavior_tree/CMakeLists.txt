@@ -119,8 +119,6 @@ list(APPEND plugin_libs nav2_globally_updated_goal_condition_bt_node)
 add_library(nav2_goal_updated_condition_bt_node SHARED plugins/condition/goal_updated_condition.cpp)
 list(APPEND plugin_libs nav2_goal_updated_condition_bt_node)
 
-add_library(nav2_is_path_valid_condition_bt_node SHARED plugins/condition/is_path_valid_condition.cpp)
-list(APPEND plugin_libs nav2_is_path_valid_condition_bt_node)
 
 add_library(nav2_time_expired_condition_bt_node SHARED plugins/condition/time_expired_condition.cpp)
 list(APPEND plugin_libs nav2_time_expired_condition_bt_node)
@@ -154,6 +152,12 @@ list(APPEND plugin_libs nav2_would_a_planner_recovery_help_condition_bt_node)
 
 add_library(nav2_would_a_smoother_recovery_help_condition_bt_node SHARED plugins/condition/would_a_smoother_recovery_help_condition.cpp)
 list(APPEND plugin_libs nav2_would_a_smoother_recovery_help_condition_bt_node)
+
+add_library(nav2_would_a_route_recovery_help_condition_bt_node SHARED plugins/condition/would_a_route_recovery_help_condition.cpp)
+list(APPEND plugin_libs nav2_would_a_route_recovery_help_condition_bt_node)
+
+add_library(nav2_is_goal_nearby_condition_bt_node SHARED plugins/condition/is_goal_nearby_condition.cpp)
+list(APPEND plugin_libs nav2_is_goal_nearby_condition_bt_node)
 
 add_library(nav2_reinitialize_global_localization_service_bt_node SHARED plugins/action/reinitialize_global_localization_service.cpp)
 list(APPEND plugin_libs nav2_reinitialize_global_localization_service_bt_node)
@@ -233,6 +237,15 @@ list(APPEND plugin_libs nav2_compute_and_track_route_bt_node)
 add_library(nav2_compute_route_bt_node SHARED plugins/action/compute_route_action.cpp)
 list(APPEND plugin_libs nav2_compute_route_bt_node)
 
+add_library(check_stop_status_action_bt_node SHARED plugins/action/check_stop_status_action.cpp)
+list(APPEND plugin_libs check_stop_status_action_bt_node)
+
+add_library(check_pose_occupancy_action_bt_node SHARED plugins/action/check_pose_occupancy_action.cpp)
+list(APPEND plugin_libs check_pose_occupancy_action_bt_node)
+
+add_library(validate_path_action_bt_node SHARED plugins/action/validate_path_action.cpp)
+list(APPEND plugin_libs validate_path_action_bt_node)
+
 foreach(bt_plugin ${plugin_libs})
   ament_target_dependencies(${bt_plugin} ${dependencies})
   target_compile_definitions(${bt_plugin} PRIVATE BT_PLUGIN_EXPORT)
@@ -257,11 +270,11 @@ install(TARGETS generate_nav2_tree_nodes_xml DESTINATION lib/${PROJECT_NAME})
 
 
 install(DIRECTORY include/
-  DESTINATION include/
+  DESTINATION include/${PROJECT_NAME}
 )
 
 install(DIRECTORY test/utils/
-        DESTINATION include/${PROJECT_NAME}/utils/
+        DESTINATION include/${PROJECT_NAME}/${PROJECT_NAME}/utils/
 )
 
 install(DIRECTORY test/utils/
@@ -269,7 +282,7 @@ install(DIRECTORY test/utils/
 )
 
 install(FILES nav2_tree_nodes.xml DESTINATION share/${PROJECT_NAME})
-install(FILES ${GENERATED_DIR}/plugins_list.hpp DESTINATION include/${PROJECT_NAME})
+install(FILES ${GENERATED_DIR}/plugins_list.hpp DESTINATION include/${PROJECT_NAME}/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -279,7 +292,7 @@ if(BUILD_TESTING)
 endif()
 
 ament_export_include_directories(
-  include
+  include/${PROJECT_NAME}
 )
 
 ament_export_libraries(

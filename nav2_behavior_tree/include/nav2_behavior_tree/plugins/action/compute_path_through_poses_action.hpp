@@ -69,6 +69,16 @@ public:
   BT::NodeStatus on_cancelled() override;
 
   /**
+   * @brief Function to perform some user-defined operation upon timeout of the action
+   */
+  void on_timeout() override;
+
+  /**
+   * \brief Override required by the a BT action. Cancel the action and set the path output
+   */
+  void halt() override;
+
+  /**
    * @brief Creates list of BT ports
    * @return BT::PortsList Containing basic ports along with node-specific ports
    */
@@ -89,8 +99,11 @@ public:
           "planner_id", "",
           "Mapped name to the planner plugin type to use"),
         BT::OutputPort<nav_msgs::msg::Path>("path", "Path created by ComputePathThroughPoses node"),
+        BT::OutputPort<int>(
+          "last_reached_index", "Index of the last reachable pose from requested list of poses"),
         BT::OutputPort<ActionResult::_error_code_type>(
           "error_code_id", "The compute path through poses error code"),
+        BT::OutputPort<std::string>("error_msg", "The compute path through poses error msg"),
       });
   }
 };
